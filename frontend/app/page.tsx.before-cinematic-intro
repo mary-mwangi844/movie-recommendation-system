@@ -1,0 +1,243 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Film, Sparkles, Play } from 'lucide-react';
+
+type Genre = {
+  id: string;
+  name: string;
+};
+
+type Movie = {
+  id: string;
+  title: string;
+  description: string;
+  releaseYear: number;
+  runtime: number | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  trailerUrl: string | null;
+  tmdbId: number | null;
+  averageRating: number;
+  totalRatings: number;
+  views: number;
+  popularity: number;
+  genres: Genre[];
+};
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+/* ============================================================
+   ANIMATED POSTER WALL
+============================================================ */
+
+function PosterWall({ movies }: { movies: Movie[] }) {
+  const posters = movies.filter((movie) => movie.posterUrl);
+
+  if (!posters.length) {
+    return (
+      <div className="absolute inset-0 bg-[#050505]" />
+    );
+  }
+
+  /*
+   * Duplicate the posters so the wall feels dense even when
+   * the database contains only a small number of movies.
+   */
+  const wallMovies = [...posters, ...posters, ...posters];
+
+  const columns = [
+    wallMovies.slice(0, 8),
+    wallMovies.slice(8, 16),
+    wallMovies.slice(16, 24),
+    wallMovies.slice(24, 32),
+    wallMovies.slice(32, 40),
+    wallMovies.slice(40, 48),
+    wallMovies.slice(48, 56),
+  ];
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-black">
+      <div className="absolute inset-[-15%] flex gap-4 opacity-70 md:gap-5">
+        {columns.map((column, columnIndex) => (
+          <div
+            key={columnIndex}
+            className={`flex w-[130px] min-w-[130px] flex-col gap-4 md:w-[170px] md:min-w-[170px] md:gap-5 ${
+              columnIndex % 2 === 0
+                ? 'animate-poster-scroll-up'
+                : 'animate-poster-scroll-down'
+            }`}
+          >
+            {[...column, ...column].map((movie, index) => (
+              <div
+                key={`${movie.id}-${columnIndex}-${index}`}
+                className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900 shadow-2xl"
+              >
+                <img
+                  src={movie.posterUrl!}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                />
+
+                <div className="absolute inset-0 bg-black/20" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Heavy cinematic treatment */}
+      <div className="absolute inset-0 bg-black/45" />
+
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/30" />
+
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
+
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.35)_45%,rgba(0,0,0,0.9)_100%)]" />
+
+      {/* Slight blur keeps the text readable */}
+      <div className="absolute inset-0 backdrop-blur-[1px]" />
+    </div>
+  );
+}
+
+/* ============================================================
+   CINEMATIC INTRO
+============================================================ */
+
+function CinematicIntro({ movies }: { movies: Movie[] }) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black text-white">
+      <PosterWall movies={movies} />
+
+      {/* Navbar */}
+      <nav className="absolute inset-x-0 top-0 z-30">
+        <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6 md:px-10 lg:px-16">
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black shadow-2xl">
+              <Film className="h-5 w-5" />
+            </div>
+
+            <span className="text-lg font-bold tracking-tight">
+              MovieRec
+            </span>
+          </Link>
+
+          <Link
+            href="/login"
+            className="text-sm font-medium text-zinc-300 transition hover:text-white"
+          >
+            Login
+          </Link>
+        </div>
+      </nav>
+
+      {/* Intro content */}
+      <section className="relative z-20 mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center">
+        <div className="animate-fade-in">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-200 backdrop-blur-xl">
+            <Sparkles className="h-3.5 w-3.5" />
+            MovieRec
+          </div>
+
+          <h1 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] sm:text-7xl md:text-8xl lg:text-9xl">
+            Discover.
+            <br />
+            <span className="text-zinc-400">
+              Rate.
+            </span>{' '}
+            Remember.
+          </h1>
+
+          <p className="mx-auto mt-8 max-w-xl text-base leading-7 text-zinc-300 md:text-lg">
+            Find movies that match your taste.
+            <br />
+            Discover something worth watching.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href="/register"
+              className="group flex items-center gap-3 rounded-full bg-white px-8 py-4 font-semibold text-black shadow-2xl transition duration-300 hover:scale-105 hover:bg-zinc-200"
+            >
+              <Play className="h-5 w-5 fill-current transition group-hover:scale-110" />
+              Start Exploring
+            </Link>
+
+            <Link
+              href="/login"
+              className="rounded-full border border-white/15 bg-white/10 px-8 py-4 font-medium text-white backdrop-blur-xl transition hover:bg-white/15"
+            >
+              Already have an account?
+              <span className="ml-2 font-semibold">
+                Login
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 h-32 bg-gradient-to-t from-black to-transparent" />
+    </main>
+  );
+}
+
+/* ============================================================
+   MAIN PAGE
+============================================================ */
+
+export default function LandingPage() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadMovies() {
+      try {
+        const response = await fetch(`${API_URL}/movies`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch movies');
+        }
+
+        const data = await response.json();
+
+        setMovies(data.movies || []);
+      } catch (error) {
+        console.error('Failed to load movies:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadMovies();
+  }, []);
+
+  /*
+   * While movies are loading, keep the cinematic experience
+   * instead of showing an empty page.
+   */
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black text-white">
+        <div className="flex flex-col items-center">
+          <div className="mb-5 flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl bg-white text-black">
+            <Film className="h-7 w-7" />
+          </div>
+
+          <p className="text-sm text-zinc-500">
+            Loading MovieRec...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  return <CinematicIntro movies={movies} />;
+}
