@@ -5,89 +5,282 @@ import { useQuery } from '@tanstack/react-query';
 import { moviesApi } from '../../lib/api';
 import Link from 'next/link';
 
+const genres = [
+  'Action',
+  'Adventure',
+  'Animation',
+  'Comedy',
+  'Crime',
+  'Drama',
+  'Horror',
+  'Sci-Fi',
+  'Thriller',
+  'Romance',
+];
+
 export default function MoviesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['movies', searchQuery, selectedGenre],
-    queryFn: () => moviesApi.getAll({ query: searchQuery, genre: selectedGenre }),
+    queryKey: ['movies', searchQuery],
+    queryFn: () => moviesApi.search({ query: searchQuery }),
+    enabled: searchQuery.trim().length > 0,
   });
 
   const movies = data?.data?.movies || [];
 
+  const filteredMovies = selectedGenre
+    ? movies.filter((movie: any) =>
+        movie.genres?.some(
+          (genre: any) =>
+            genre.name?.toLowerCase() === selectedGenre.toLowerCase()
+        )
+      )
+    : movies;
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">🎬 Movies</h1>
-          
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
+    <main className="movies-page">
+
+      <header className="movies-header">
+
+        <div className="movies-header-top">
+
+          <div className="movies-heading">
+            <h1>🎬 Movies</h1>
+            <p>Discover movies you&apos;ll love</p>
+          </div>
+
+          <div className="movie-search">
+            <span>🔍</span>
+
             <input
               type="text"
-              placeholder="Search movies..."
+              placeholder="Search for movies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <select
-              value={selectedGenre}
-              onChange={(e) => setSelectedGenre(e.target.value)}
-              className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Genres</option>
-              <option value="Action">Action</option>
-              <option value="Adventure">Adventure</option>
-              <option value="Animation">Animation</option>
-              <option value="Comedy">Comedy</option>
-              <option value="Crime">Crime</option>
-              <option value="Drama">Drama</option>
-              <option value="Horror">Horror</option>
-              <option value="Sci-Fi">Sci-Fi</option>
-              <option value="Thriller">Thriller</option>
-              <option value="Romance">Romance</option>
-            </select>
           </div>
+
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">Loading movies...</div>
-        ) : error ? (
-          <div className="text-center py-12 text-red-400">Error loading movies</div>
-        ) : movies.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">No movies found</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {movies.map((movie: any) => (
-              <Link key={movie.id} href={`/movies/${movie.id}`}>
-                <div className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform cursor-pointer border border-gray-800">
-                  <img
-                    src={movie.posterUrl}
-                    alt={movie.title}
-                    className="w-full h-64 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{movie.title}</h3>
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                      <span>{movie.releaseYear}</span>
-                      <span className="flex items-center gap-1">
-                        ⭐ {movie.averageRating.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {movie.genres?.slice(0, 2).map((genre: any) => (
-                        <span key={genre.id} className="text-xs px-2 py-1 bg-gray-800 rounded">
-                          {genre.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+        <div className="genre-list">
+
+          <button
+            className={!selectedGenre ? 'genre-button active' : 'genre-button'}
+            onClick={() => setSelectedGenre('')}
+          >
+            All
+          </button>
+
+          {genres.map((genre) => (
+            <button
+              key={genre}
+              className={
+                selectedGenre === genre
+                  ? 'genre-button active'
+                  : 'genre-button'
+              }
+              onClick={() => setSelectedGenre(genre)}
+            >
+              {genre}
+            </button>
+          ))}
+
+        </div>
+
+      </header>
+
+      <section className="movies-content">
+
+        {!searchQuery.trim() && (
+
+          <div className="movies-empty">
+
+            <div className="empty-icon">
+              🎬
+            </div>
+
+            <h2>Search for a movie</h2>
+
+            <p>Find your next movie to watch</p>
+
           </div>
+
         )}
-      </div>
-    </div>
+
+        {searchQuery.trim() && isLoading && (
+
+          <div className="movies-empty">
+
+            <div className="loading-spinner"></div>
+
+            <p>Searching movies...</p>
+
+          </div>
+
+        )}
+
+        {searchQuery.trim() && error && (
+
+          <div className="movies-empty">
+
+            <div className="empty-icon">
+              ⚠️
+            </div>
+
+            <h2>Something went wrong</h2>
+
+            <p>
+              We couldn&apos;t load the movies. Please try again.
+            </p>
+
+          </div>
+
+        )}
+
+        {searchQuery.trim() &&
+          !isLoading &&
+          !error &&
+          filteredMovies.length === 0 && (
+
+            <div className="movies-empty">
+
+              <div className="empty-icon">
+                🎞️
+              </div>
+
+              <h2>No movies found</h2>
+
+              <p>Try another search or genre.</p>
+
+            </div>
+
+          )}
+
+        {searchQuery.trim() &&
+          !isLoading &&
+          !error &&
+          filteredMovies.length > 0 && (
+
+            <>
+
+              <div className="results-header">
+
+                <div>
+                  <h2>
+                    {selectedGenre || 'Search Results'}
+                  </h2>
+
+                  <p>
+                    {filteredMovies.length}{' '}
+                    {filteredMovies.length === 1
+                      ? 'movie'
+                      : 'movies'}{' '}
+                    found
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="movies-grid">
+
+                {filteredMovies.map((movie: any) => (
+
+                  <Link
+                    key={movie.tmdbId ?? movie.id}
+                    href={`/movies/${movie.id}`}
+                    className="movie-link"
+                  >
+
+                    <article className="movie-card">
+
+                      <div className="movie-poster">
+
+                        {movie.posterUrl ? (
+
+                          <img
+                            src={movie.posterUrl}
+                            alt={movie.title}
+                          />
+
+                        ) : (
+
+                          <div className="no-poster">
+                            🎬
+                          </div>
+
+                        )}
+
+                        <div className="movie-rating">
+                          ⭐{' '}
+                          {typeof movie.averageRating === 'number'
+                            ? movie.averageRating.toFixed(1)
+                            : 'N/A'}
+                        </div>
+
+                        <div className="movie-overlay">
+
+                          <span>
+                            View movie
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                      <div className="movie-info">
+
+                        <h3>
+                          {movie.title}
+                        </h3>
+
+                        <div className="movie-meta">
+
+                          <span>
+                            {movie.releaseYear || 'Unknown'}
+                          </span>
+
+                          <span>•</span>
+
+                          <span>
+                            {typeof movie.averageRating === 'number'
+                              ? `${movie.averageRating.toFixed(1)} rating`
+                              : 'No rating'}
+                          </span>
+
+                        </div>
+
+                        <div className="movie-genres">
+
+                          {movie.genres
+                            ?.slice(0, 2)
+                            .map((genre: any) => (
+
+                              <span key={genre.id ?? genre.name}>
+                                {genre.name}
+                              </span>
+
+                            ))}
+
+                        </div>
+
+                      </div>
+
+                    </article>
+
+                  </Link>
+
+                ))}
+
+              </div>
+
+            </>
+
+          )}
+
+      </section>
+
+    </main>
   );
 }

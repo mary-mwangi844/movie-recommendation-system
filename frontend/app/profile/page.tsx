@@ -17,7 +17,8 @@ export default function ProfilePage() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: { firstName?: string; lastName?: string }) => usersApi.updateProfile(data),
+    mutationFn: (data: { firstName?: string; lastName?: string }) =>
+      usersApi.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
@@ -31,100 +32,255 @@ export default function ProfilePage() {
   });
 
   if (profileLoading || prefsLoading) {
-    return <div className="min-h-screen bg-gray-950 text-white p-6">Loading...</div>;
+    return (
+      <main className="profile-page">
+        <div className="profile-loading">
+          <div className="profile-spinner"></div>
+          <p>Loading your profile...</p>
+        </div>
+      </main>
+    );
   }
 
   const user = profile?.data;
   const prefs = preferences?.data;
 
-  return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">👤 Profile</h1>
+  const initials =
+    `${user?.firstName || ''}${user?.lastName || ''}`.trim().length > 0
+      ? `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase()
+      : user?.username?.[0]?.toUpperCase() || 'U';
 
-        <div className="bg-gray-900 rounded-lg p-6 mb-8 border border-gray-800">
-          <h2 className="text-2xl font-bold mb-4">Account Information</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Username</label>
-              <p className="text-lg">{user?.username}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
-              <p className="text-lg">{user?.email}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">First Name</label>
-                <input
-                  type="text"
-                  defaultValue={user?.firstName || ''}
-                  onBlur={(e) => updateProfileMutation.mutate({ firstName: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Last Name</label>
-                <input
-                  type="text"
-                  defaultValue={user?.lastName || ''}
-                  onBlur={(e) => updateProfileMutation.mutate({ lastName: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Role</label>
-              <p className="text-lg">{user?.role}</p>
-            </div>
+  const memberSince = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString()
+    : 'N/A';
+
+  const lastLogin = user?.lastLoginAt
+    ? new Date(user.lastLoginAt).toLocaleDateString()
+    : 'N/A';
+
+  return (
+    <main className="profile-page">
+
+      <div className="profile-container">
+
+        {/* Page heading */}
+        <div className="profile-heading">
+          <div>
+            <p className="profile-eyebrow">YOUR ACCOUNT</p>
+            <h1>Profile</h1>
+            <p className="profile-subtitle">
+              Manage your account and movie preferences.
+            </p>
           </div>
         </div>
 
-        <div className="bg-gray-900 rounded-lg p-6 mb-8 border border-gray-800">
-          <h2 className="text-2xl font-bold mb-4">Preferences</h2>
-          <div className="space-y-4">
+        {/* Profile hero */}
+        <section className="profile-hero">
+
+          <div className="profile-avatar">
+            {initials}
+          </div>
+
+          <div className="profile-identity">
+            <h2>{user?.username || 'User'}</h2>
+
+            <p>{user?.email || 'No email available'}</p>
+
+            <span className="profile-role">
+              {user?.role || 'USER'}
+            </span>
+          </div>
+
+          <div className="profile-member">
+            <span>MEMBER SINCE</span>
+            <strong>{memberSince}</strong>
+          </div>
+
+        </section>
+
+        {/* Account information */}
+        <section className="profile-card">
+
+          <div className="profile-card-header">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Minimum Rating</label>
+              <p className="profile-section-label">ACCOUNT</p>
+              <h2>Account Information</h2>
+            </div>
+          </div>
+
+          <div className="profile-info-grid">
+
+            <div className="profile-field">
+              <label>Username</label>
+              <div className="profile-value">
+                {user?.username || '—'}
+              </div>
+            </div>
+
+            <div className="profile-field">
+              <label>Email</label>
+              <div className="profile-value">
+                {user?.email || '—'}
+              </div>
+            </div>
+
+            <div className="profile-field">
+              <label>First Name</label>
+
               <input
-                type="number"
+                type="text"
+                defaultValue={user?.firstName || ''}
+                placeholder="Enter first name"
+                onBlur={(e) =>
+                  updateProfileMutation.mutate({
+                    firstName: e.target.value,
+                  })
+                }
+                className="profile-input"
+              />
+            </div>
+
+            <div className="profile-field">
+              <label>Last Name</label>
+
+              <input
+                type="text"
+                defaultValue={user?.lastName || ''}
+                placeholder="Enter last name"
+                onBlur={(e) =>
+                  updateProfileMutation.mutate({
+                    lastName: e.target.value,
+                  })
+                }
+                className="profile-input"
+              />
+            </div>
+
+            <div className="profile-field">
+              <label>Account Role</label>
+              <div className="profile-value">
+                <span className="role-dot"></span>
+                {user?.role || 'USER'}
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* Preferences */}
+        <section className="profile-card">
+
+          <div className="profile-card-header">
+            <div>
+              <p className="profile-section-label">PERSONALIZATION</p>
+              <h2>Movie Preferences</h2>
+            </div>
+
+            <span className="preference-icon">★</span>
+          </div>
+
+          <div className="preferences-grid">
+
+            <div className="preference-item">
+
+              <div className="preference-label">
+                <div>
+                  <h3>Minimum Rating</h3>
+                  <p>
+                    Only show movies that meet your preferred rating.
+                  </p>
+                </div>
+
+                <span className="rating-value">
+                  {prefs?.minRating || 3.0}
+                </span>
+              </div>
+
+              <input
+                type="range"
                 min="0"
                 max="5"
                 step="0.5"
                 defaultValue={prefs?.minRating || 3}
-                onBlur={(e) => updatePreferencesMutation.mutate({ minRating: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) =>
+                  updatePreferencesMutation.mutate({
+                    minRating: parseFloat(e.target.value),
+                  })
+                }
+                className="rating-slider"
               />
+
+              <div className="rating-scale">
+                <span>0</span>
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+              </div>
+
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Language</label>
+
+            <div className="preference-item">
+
+              <div className="preference-label">
+                <div>
+                  <h3>Language</h3>
+                  <p>
+                    Choose the language used for your movie experience.
+                  </p>
+                </div>
+              </div>
+
               <select
                 defaultValue={prefs?.language || 'en'}
-                onChange={(e) => updatePreferencesMutation.mutate({ language: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) =>
+                  updatePreferencesMutation.mutate({
+                    language: e.target.value,
+                  })
+                }
+                className="profile-select"
               >
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
                 <option value="fr">French</option>
                 <option value="de">German</option>
               </select>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-          <h2 className="text-2xl font-bold mb-4">Account Stats</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-blue-400">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
-              <p className="text-sm text-gray-400">Member Since</p>
             </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-400">{user?.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'N/A'}</p>
-              <p className="text-sm text-gray-400">Last Login</p>
-            </div>
+
           </div>
-        </div>
+
+        </section>
+
+        {/* Account statistics */}
+        <section className="profile-stats">
+
+          <div className="profile-stat">
+            <span className="stat-label">MEMBER SINCE</span>
+            <strong>{memberSince}</strong>
+          </div>
+
+          <div className="profile-stat">
+            <span className="stat-label">LAST LOGIN</span>
+            <strong>{lastLogin}</strong>
+          </div>
+
+          <div className="profile-stat">
+            <span className="stat-label">ROLE</span>
+            <strong>{user?.role || 'USER'}</strong>
+          </div>
+
+          <div className="profile-stat">
+            <span className="stat-label">MIN RATING</span>
+            <strong>{prefs?.minRating || 3.0}</strong>
+          </div>
+
+        </section>
+
       </div>
-    </div>
+
+    </main>
   );
 }

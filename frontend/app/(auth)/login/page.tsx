@@ -1,11 +1,16 @@
 "use client";
 
+import "./login.css";
+
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authApi } from "../../../lib/api";
+import { useAuth } from "../../../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,41 +24,16 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const response = await authApi.login({ email, password });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid email or password");
-      }
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("token", data.accessToken);
-
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-      }
+      login(response.data.token, response.data.user);
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again."
+        err.response?.data?.message ||
+          err.message ||
+          "Invalid email or password"
       );
     } finally {
       setLoading(false);
@@ -62,7 +42,7 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      {/* Decorative movie visual */}
+      {/* Left visual panel */}
       <div className="login-visual" aria-hidden="true">
         <div className="login-visual-overlay" />
 
@@ -100,15 +80,16 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Login section */}
+      {/* Login area */}
       <section className="login-content">
         <div className="login-topbar">
           <Link href="/" className="login-logo">
             MOVIEREC
           </Link>
-<a href="/" className="back-link">
+
+          <Link href="/" className="back-link">
             ← Back to MovieRec
-</a>
+          </Link>
         </div>
 
         <div className="login-card">

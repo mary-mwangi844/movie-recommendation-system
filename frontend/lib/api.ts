@@ -52,9 +52,14 @@ export const usersApi = {
 export const moviesApi = {
   getAll: (params?: { query?: string; genre?: string; year?: number; minRating?: number; page?: number; limit?: number }) =>
     api.get('/movies', { params }),
+getTmdbTrending: (page?: number) =>
+    api.get('/tmdb/trending', { params: { page } }),
+
+getTmdbByGenre: (genreId: number, page?: number) =>
+    api.get(`/tmdb/genre/${genreId}`, { params: { page } }),
   getTrending: (limit?: number) => api.get('/movies/trending', { params: { limit } }),
-  search: (params?: { query?: string; genre?: string; year?: number; minRating?: number; page?: number; limit?: number }) =>
-    api.get('/movies/search', { params }),
+search: (params?: { query?: string; page?: number }) =>
+    api.get('/tmdb/search', { params }),
   getById: (id: string) => api.get(`/movies/${id}`),
   getSimilar: (id: string, limit?: number) => api.get(`/movies/${id}/similar`, { params: { limit } }),
   create: (data: any) => api.post('/movies', data),

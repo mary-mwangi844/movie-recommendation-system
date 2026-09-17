@@ -1,5 +1,7 @@
 "use client";
 
+
+import "./dashboard.css";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { moviesApi, recommendationsApi } from "../../lib/api";

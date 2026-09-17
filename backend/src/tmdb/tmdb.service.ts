@@ -151,7 +151,173 @@ export class TmdbService {
       );
     }
   }
+  async searchMovies(query: string, page = 1) {
+    if (!query?.trim()) {
+      return {
+        movies: [],
+        pagination: {
+          page,
+          totalPages: 0,
+          totalResults: 0,
+        },
+      };
+    }
 
+    try {
+      const params = new URLSearchParams({
+        query: query.trim(),
+        language: 'en-US',
+        page: String(page),
+        include_adult: 'false',
+      });
+
+      const data = await this.request(`/search/movie?${params.toString()}`);
+
+      const movies = (data.results || []).map((movie: any) => ({
+        tmdbId: movie.id,
+        title: movie.title,
+        description: movie.overview || 'No description available.',
+        releaseYear: movie.release_date
+          ? parseInt(movie.release_date.substring(0, 4), 10)
+          : null,
+        posterUrl: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+        backdropUrl: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+          : null,
+        averageRating: movie.vote_average || 0,
+        popularity: movie.popularity || 0,
+        genres: (movie.genre_ids || [])
+          .map((id: number) => {
+            const name = this.getGenreName(id);
+            return name ? { id, name } : null;
+          })
+          .filter(Boolean),
+      }));
+
+      return {
+        movies,
+        pagination: {
+          page: data.page,
+          totalPages: data.total_pages,
+          totalResults: data.total_results,
+        },
+      };
+    } catch (error) {
+      console.error('TMDB movie search failed:', error);
+
+      throw new InternalServerErrorException(
+        'Failed to search movies on TMDB',
+      );
+    }
+  }
+  async getTrendingMovies(page = 1) {
+    try {
+      const params = new URLSearchParams({
+        language: 'en-US',
+        page: String(page),
+      });
+
+      const data = await this.request(
+        `/trending/movie/week?${params.toString()}`,
+      );
+
+      const movies = (data.results || []).map((movie: any) => ({
+        tmdbId: movie.id,
+        title: movie.title,
+        description: movie.overview || 'No description available.',
+        releaseYear: movie.release_date
+          ? parseInt(movie.release_date.substring(0, 4), 10)
+          : null,
+        releaseDate: movie.release_date || null,
+        posterUrl: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+        backdropUrl: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+          : null,
+        averageRating: movie.vote_average || 0,
+        popularity: movie.popularity || 0,
+        genres: (movie.genre_ids || [])
+          .map((id: number) => {
+            const name = this.getGenreName(id);
+            return name ? { id, name } : null;
+          })
+          .filter(Boolean),
+      }));
+
+      return {
+        movies,
+        pagination: {
+          page: data.page,
+          totalPages: data.total_pages,
+          totalResults: data.total_results,
+        },
+      };
+    } catch (error) {
+      console.error('TMDB trending movies failed:', error);
+
+      throw new InternalServerErrorException(
+        'Failed to load trending movies from TMDB',
+      );
+    }
+  }
+
+  async getMoviesByGenre(genreId: number, page = 1) {
+    try {
+      const params = new URLSearchParams({
+        language: 'en-US',
+        page: String(page),
+        with_genres: String(genreId),
+        sort_by: 'popularity.desc',
+        include_adult: 'false',
+      });
+
+      const data = await this.request(
+        `/discover/movie?${params.toString()}`,
+      );
+
+      const movies = (data.results || []).map((movie: any) => ({
+        tmdbId: movie.id,
+        title: movie.title,
+        description: movie.overview || 'No description available.',
+        releaseYear: movie.release_date
+          ? parseInt(movie.release_date.substring(0, 4), 10)
+          : null,
+        releaseDate: movie.release_date || null,
+        posterUrl: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+        backdropUrl: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+          : null,
+        averageRating: movie.vote_average || 0,
+        popularity: movie.popularity || 0,
+        genres: (movie.genre_ids || [])
+          .map((id: number) => {
+            const name = this.getGenreName(id);
+            return name ? { id, name } : null;
+          })
+          .filter(Boolean),
+      }));
+
+      return {
+        movies,
+        pagination: {
+          page: data.page,
+          totalPages: data.total_pages,
+          totalResults: data.total_results,
+        },
+      };
+    } catch (error) {
+      console.error('TMDB genre movies failed:', error);
+
+      throw new InternalServerErrorException(
+        'Failed to load movies by genre from TMDB',
+      );
+    }
+  }
   private getGenreName(tmdbGenreId: number): string | null {
     const genres: Record<number, string> = {
       28: 'Action',
