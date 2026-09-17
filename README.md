@@ -1,0 +1,1 @@
+Movie Recommendation System — A full-stack movie discovery platform with TMDB-powered movie search, genre filtering, movie ratings, personalized user profiles and preferences, authentication, and a responsive cinematic interface. The latest update introduces redesigned Login, Registration, Dashboard, Movies, and Profile pages with a consistent dark movie-focused UI.
